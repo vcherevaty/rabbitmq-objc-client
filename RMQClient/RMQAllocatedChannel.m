@@ -94,7 +94,12 @@
     [self.allocator releaseChannelNumber:self.channelNumber];
 }
 
+- (void)suspend {
+    [self.commandQueue suspend];
+}
+
 - (void)recover {
+    [self.commandQueue reset];
     [self open];
     [self recoverPrefetch];
     [self recoverConfirmations];

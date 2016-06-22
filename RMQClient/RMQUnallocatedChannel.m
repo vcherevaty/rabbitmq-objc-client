@@ -27,6 +27,8 @@
 
 - (void)blockingClose {}
 
+- (void)suspend {}
+
 - (void)recover {}
 
 - (void)blockingWaitOn:(Class)method {

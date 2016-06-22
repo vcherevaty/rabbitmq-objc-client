@@ -8,6 +8,7 @@ enum FakeSerialQueueError: ErrorType {
     var delayedItems: [() -> Void] = []
     var index = 0
     var suspended = false
+    var resetCalled = false
     var enqueueDelay: NSNumber?
 
     func enqueue(operation: RMQOperation!) {
@@ -31,6 +32,10 @@ enum FakeSerialQueueError: ErrorType {
 
     func resume() {
         suspended = false
+    }
+
+    func reset() {
+        resetCalled = true
     }
 
     // MARK: Helpers

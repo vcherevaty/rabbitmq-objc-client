@@ -67,4 +67,19 @@ class RMQGCDSerialQueueTest: XCTestCase {
         XCTAssertEqual(["enqueued", "delayed"], items)
     }
 
+    func testResetCreatesANewQueue() {
+        let q = RMQGCDSerialQueue(name: "reset test")
+        q.suspend()
+        q.enqueue { XCTFail("should never be called") }
+        q.reset()
+        q.resume()
+
+        var called = false
+        q.blockingEnqueue {
+            called = true
+        }
+
+        XCTAssert(called)
+    }
+
 }

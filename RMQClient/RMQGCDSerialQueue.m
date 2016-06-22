@@ -10,6 +10,7 @@ typedef NS_ENUM(int32_t, RMQGCDSerialQueueStatus) {
 @property (nonatomic, readwrite) NSString *name;
 @property (nonatomic, readwrite) dispatch_queue_t dispatchQueue;
 @property (atomic, readwrite) volatile int32_t status;
+@property (nonatomic, readwrite) BOOL performOperations;
 @end
 
 @implementation RMQGCDSerialQueue
@@ -17,10 +18,10 @@ typedef NS_ENUM(int32_t, RMQGCDSerialQueueStatus) {
 - (instancetype)initWithName:(NSString *)name {
     self = [super init];
     if (self) {
+        self.performOperations = YES;
         self.name = name;
         self.status = RMQGCDSerialQueueStatusNormal;
-        NSString *qName = [NSString stringWithFormat:@"RMQGCDSerialQueue (%@)", name];
-        self.dispatchQueue = dispatch_queue_create([qName cStringUsingEncoding:NSUTF8StringEncoding], NULL);
+        [self createQueue];
     }
     return self;
 }
@@ -35,18 +36,18 @@ typedef NS_ENUM(int32_t, RMQGCDSerialQueueStatus) {
 }
 
 - (void)enqueue:(RMQOperation)operation {
-    dispatch_async(self.dispatchQueue, operation);
+    dispatch_async(self.dispatchQueue, [self wrap:operation]);
 }
 
 - (void)blockingEnqueue:(RMQOperation)operation {
-    dispatch_sync(self.dispatchQueue, operation);
+    dispatch_sync(self.dispatchQueue, [self wrap:operation]);
 }
 
 - (void)delayedBy:(NSNumber *)delay
           enqueue:(RMQOperation)operation {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
                    self.dispatchQueue,
-                   operation);
+                   [self wrap:operation]);
 }
 
 - (void)suspend {
@@ -75,6 +76,29 @@ typedef NS_ENUM(int32_t, RMQGCDSerialQueueStatus) {
             return;
         }
     }
+}
+
+- (void)reset {
+    self.performOperations = NO;
+    [self resume];
+    [self blockingEnqueue:^{}];
+    self.performOperations = YES;
+    [self createQueue];
+}
+
+#pragma mark - Private
+
+- (RMQOperation)wrap:(RMQOperation)operation {
+    return ^{
+        if (self.performOperations) {
+            operation();
+        }
+    };
+}
+
+- (void)createQueue {
+    NSString *qName = [NSString stringWithFormat:@"RMQGCDSerialQueue (%@)", self.name];
+    self.dispatchQueue = dispatch_queue_create([qName cStringUsingEncoding:NSUTF8StringEncoding], NULL);
 }
 
 @end

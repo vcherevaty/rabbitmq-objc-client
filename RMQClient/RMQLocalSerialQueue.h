@@ -10,5 +10,6 @@ typedef void (^RMQOperation)();
           enqueue:(RMQOperation)operation;
 - (void)suspend;
 - (void)resume;
+- (void)reset;
 
 @end

@@ -2,6 +2,22 @@ import XCTest
 
 class ChannelRecoveryTest: XCTestCase {
 
+    func testSuspendSuspendsQueueOperations() {
+        let dispatcher = DispatcherSpy()
+        let q = FakeSerialQueue()
+        let ch = ChannelHelper.makeChannel(1, dispatcher: dispatcher, commandQueue: q)
+        ch.suspend()
+        XCTAssert(q.suspended)
+    }
+
+    func testResetsCommandQueue() {
+        let q = FakeSerialQueue()
+        let ch = ChannelHelper.makeChannel(1, commandQueue: q)
+        ch.recover()
+
+        XCTAssert(q.resetCalled)
+    }
+
     func testReopensChannel() {
         let dispatcher = DispatcherSpy()
         let ch = ChannelHelper.makeChannel(1, dispatcher: dispatcher)

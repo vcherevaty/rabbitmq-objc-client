@@ -80,6 +80,9 @@
         blockingCloseCalled = true
     }
 
+    func suspend() {
+    }
+
     func recover() {
         recoverCalled = true
     }

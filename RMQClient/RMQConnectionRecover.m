@@ -34,6 +34,10 @@
 -  (void)recover:(id<RMQStarter>)connection
 channelAllocator:(id<RMQChannelAllocator>)allocator
            error:(NSError *)error {
+    for (id<RMQChannel> ch in allocator.allocatedUserChannels) {
+        [ch suspend];
+    }
+
     [self.commandQueue enqueue:^{
         [self.heartbeatSender stop];
     }];
